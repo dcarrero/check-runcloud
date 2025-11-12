@@ -10,6 +10,18 @@
 
 set -euo pipefail
 
+# Detect system language BEFORE setting UTF-8 (default to English)
+SYSTEM_LANG=$(locale 2>/dev/null | grep LANG= | cut -d= -f2 | cut -d_ -f1 || echo "en")
+if [[ "$SYSTEM_LANG" == "es" ]]; then
+    LANG_CODE="es"
+    export LC_ALL=es_ES.UTF-8 2>/dev/null || export LC_ALL=C.UTF-8
+    export LANG=es_ES.UTF-8 2>/dev/null || export LANG=C.UTF-8
+else
+    LANG_CODE="en"
+    export LC_ALL=en_US.UTF-8 2>/dev/null || export LC_ALL=C.UTF-8
+    export LANG=en_US.UTF-8 2>/dev/null || export LANG=C.UTF-8
+fi
+
 # Configuration
 readonly SCRIPT_VERSION="3.0.0"
 readonly TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
@@ -22,15 +34,6 @@ INTERACTIVE_MODE=true
 
 # Web server detection
 WEB_SERVER=""  # Will be set to "openlitespeed" or "nginx"
-
-# Language settings
-# Detect system language (default to English)
-SYSTEM_LANG=$(locale | grep LANG= | cut -d= -f2 | cut -d_ -f1)
-if [[ "$SYSTEM_LANG" == "es" ]]; then
-    LANG_CODE="es"
-else
-    LANG_CODE="en"
-fi
 
 # Color codes for terminal output
 readonly RED='\033[0;31m'
@@ -55,12 +58,13 @@ t() {
     # English translations
     declare -A en=(
         # Menu
-        ["menu_title"]="SERVER ANALYSIS TOOL"
+        ["menu_title"]="SERVER ANALYSIS TOOL for RUNCLOUD"
         ["menu_select"]="Select checks to run:"
         ["menu_run_all"]="Run ALL checks"
         ["menu_options"]="Options:"
         ["menu_toggle_log"]="Toggle Logging [Current:"
         ["menu_toggle_lang"]="Change Language [Current:"
+        ["menu_recommendations"]="General Recommendations"
         ["menu_quit"]="Quit"
         ["menu_prompt"]="Enter your choice(s) (comma-separated or space-separated):"
         ["menu_press_enter"]="Press Enter to continue..."
@@ -77,6 +81,7 @@ t() {
         ["check_8"]="System Logs"
         ["check_9"]="Network Statistics"
         ["check_10"]="Disk Space"
+        ["check_11"]="Advanced PHP Analysis"
 
         # Common
         ["on"]="ON"
@@ -106,12 +111,13 @@ t() {
     # Spanish translations
     declare -A es=(
         # Menu
-        ["menu_title"]="HERRAMIENTA DE ANÁLISIS DEL SERVIDOR"
+        ["menu_title"]="HERRAMIENTA DE ANÁLISIS para RUNCLOUD"
         ["menu_select"]="Seleccione las comprobaciones a ejecutar:"
         ["menu_run_all"]="Ejecutar TODAS las comprobaciones"
         ["menu_options"]="Opciones:"
         ["menu_toggle_log"]="Alternar Registro [Actual:"
         ["menu_toggle_lang"]="Cambiar Idioma [Actual:"
+        ["menu_recommendations"]="Recomendaciones Generales"
         ["menu_quit"]="Salir"
         ["menu_prompt"]="Ingrese su(s) opción(es) (separadas por comas o espacios):"
         ["menu_press_enter"]="Presione Enter para continuar..."
@@ -128,6 +134,7 @@ t() {
         ["check_8"]="Registros del Sistema"
         ["check_9"]="Estadísticas de Red"
         ["check_10"]="Espacio en Disco"
+        ["check_11"]="Análisis Avanzado de PHP"
 
         # Common
         ["on"]="ACTIVADO"
@@ -244,6 +251,7 @@ OPTIONS:
     -8                      Run System Logs check
     -9                      Run Network Statistics check
     -10                     Run Disk Space check
+    -11                     Run Advanced PHP Analysis
 
 EXAMPLES:
     # Interactive menu (default)
@@ -299,6 +307,7 @@ show_menu() {
     echo "  8)  $(t "check_8")"
     echo "  9)  $(t "check_9")"
     echo "  10) $(t "check_10")"
+    echo "  11) $(t "check_11")"
     echo ""
     echo -e "${YELLOW}  0)  $(t "menu_run_all")${NC}"
     echo ""
@@ -309,6 +318,7 @@ show_menu() {
 
     echo "  l)  $(t "menu_toggle_log") ${log_status}]"
     echo "  i)  $(t "menu_toggle_lang") ${lang_name}]"
+    echo "  r)  $(t "menu_recommendations")"
     echo "  q)  $(t "menu_quit")"
     echo ""
 }
@@ -369,13 +379,14 @@ run_selected_checks() {
             10)
                 analyze_disk_space
                 ;;
+            11)
+                analyze_advanced_php
+                ;;
             *)
                 log_warning "Invalid option: $choice"
                 ;;
         esac
     done
-
-    generate_summary
 
     if [[ "$ENABLE_LOGGING" == true ]]; then
         log_success "Analysis completed. Log saved to: $LOGFILE"
@@ -415,7 +426,7 @@ parse_args() {
             --no-log)
                 ENABLE_LOGGING=false
                 ;;
-            -1|-2|-3|-4|-5|-6|-7|-8|-9|-10)
+            -1|-2|-3|-4|-5|-6|-7|-8|-9|-10|-11)
                 run_checks=true
                 checks_to_run="$checks_to_run ${1#-}"
                 INTERACTIVE_MODE=false
@@ -1181,29 +1192,224 @@ analyze_disk_space() {
     log ""
 }
 
-generate_summary() {
-    log_section "SUMMARY AND RECOMMENDATIONS"
+analyze_advanced_php() {
+    log_section "11. ADVANCED PHP ANALYSIS"
 
-    # Memory usage alert
-    local memory_usage=$(free | grep Mem | awk '{printf("%.0f", ($3/$2)*100)}')
-    if [[ $memory_usage -gt $MEMORY_THRESHOLD ]]; then
-        log_warning "Memory usage > ${MEMORY_THRESHOLD}% (${memory_usage}%)"
-    fi
+    # Detect PHP version and configuration
+    log "${YELLOW}PHP Configuration:${NC}"
 
-    # Disk usage alert
-    local disk_usage=$(df / | tail -1 | awk '{print $5}' | sed 's/%//')
-    if [[ $disk_usage -gt $DISK_THRESHOLD ]]; then
-        log_warning "Disk usage > ${DISK_THRESHOLD}% (${disk_usage}%)"
+    if [[ "$WEB_SERVER" == "openlitespeed" ]]; then
+        # OpenLiteSpeed / LSPHP
+        local lsphp_bin=$(find /usr/local/lsws/lsphp* -name "php" -type f 2>/dev/null | head -1)
+        if [[ -n "$lsphp_bin" ]]; then
+            log "PHP Version:"
+            $lsphp_bin -v 2>/dev/null | head -1 | tee -a "$LOGFILE" || log "Could not detect PHP version"
+            log ""
+
+            log "Critical PHP Settings:"
+            $lsphp_bin -i 2>/dev/null | grep -E "memory_limit|max_execution_time|max_input_time|post_max_size|upload_max_filesize" | tee -a "$LOGFILE"
+            log ""
+
+            log "OPcache Status:"
+            $lsphp_bin -i 2>/dev/null | grep -E "opcache.enable|opcache.memory_consumption|opcache.max_accelerated_files" | tee -a "$LOGFILE"
+        else
+            log "Could not find LSPHP binary"
+        fi
+
+        # LSPHP process analysis by user
+        log ""
+        log "${YELLOW}PHP Processes by User:${NC}"
+        ps aux | grep lsphp | grep -v grep | awk '{user[$1]++; mem[$1]+=$6; cpu[$1]+=$3} END {printf "%-15s %8s %10s %10s\n", "USER", "COUNT", "TOTAL_MEM", "AVG_CPU"; for (u in user) printf "%-15s %8d %9.1fMB %9.1f%%\n", u, user[u], mem[u]/1024, cpu[u]/user[u]}' | tee -a "$LOGFILE"
+
+    elif [[ "$WEB_SERVER" == "nginx" ]]; then
+        # Nginx / PHP-FPM
+        local php_fpm_bin=$(which php-fpm 2>/dev/null || find /usr/sbin /usr/local/sbin -name "php-fpm*" 2>/dev/null | head -1)
+        local php_bin=$(which php 2>/dev/null)
+
+        if [[ -n "$php_bin" ]]; then
+            log "PHP Version:"
+            $php_bin -v 2>/dev/null | head -1 | tee -a "$LOGFILE" || log "Could not detect PHP version"
+            log ""
+
+            log "Critical PHP Settings:"
+            $php_bin -i 2>/dev/null | grep -E "memory_limit|max_execution_time|max_input_time|post_max_size|upload_max_filesize" | tee -a "$LOGFILE"
+            log ""
+
+            log "OPcache Status:"
+            $php_bin -i 2>/dev/null | grep -E "opcache.enable|opcache.memory_consumption|opcache.max_accelerated_files" | tee -a "$LOGFILE"
+        fi
+
+        log ""
+        log "${YELLOW}PHP-FPM Pool Status:${NC}"
+        # Find PHP-FPM pools
+        local pool_configs=$(find /etc/php*/*/fpm/pool.d/ -name "*.conf" 2>/dev/null)
+        if [[ -n "$pool_configs" ]]; then
+            echo "$pool_configs" | while read pool_file; do
+                local pool_name=$(basename "$pool_file" .conf)
+                log "Pool: $pool_name"
+                grep -E "^pm =|^pm.max_children|^pm.start_servers|^pm.min_spare_servers|^pm.max_spare_servers" "$pool_file" 2>/dev/null | tee -a "$LOGFILE"
+                log ""
+            done
+        else
+            log "No PHP-FPM pool configurations found"
+        fi
+
+        # PHP-FPM process analysis by user
+        log "${YELLOW}PHP-FPM Processes by User:${NC}"
+        ps aux | grep php-fpm | grep -v grep | awk '{user[$1]++; mem[$1]+=$6; cpu[$1]+=$3} END {printf "%-15s %8s %10s %10s\n", "USER", "COUNT", "TOTAL_MEM", "AVG_CPU"; for (u in user) printf "%-15s %8d %9.1fMB %9.1f%%\n", u, user[u], mem[u]/1024, cpu[u]/user[u]}' | tee -a "$LOGFILE"
     fi
 
     log ""
-    log "Recommendations:"
-    log "1. If lsphp processes > ${LONG_PROCESS_THRESHOLD}s: Review slow PHP code or N+1 queries"
-    log "2. If max_connections near limit: Increase in MySQL/MariaDB configuration"
-    log "3. Review slow query log to optimize indexes"
-    log "4. If low memory: Consider increasing innodb_buffer_pool_size"
-    log "5. Review query cache settings in RunCloud"
-    log "6. Monitor OOM killer messages - may need to upgrade server resources"
+    log "${YELLOW}Memory Usage Analysis (Top 10):${NC}"
+    if [[ "$WEB_SERVER" == "openlitespeed" ]]; then
+        ps aux --sort=-rss | grep lsphp | grep -v grep | head -10 | awk '{printf "%-8s %6s %6s %10s %10s %s\n", $1, $3"%", $4"%", $5/1024"MB", $6/1024"MB", $11}' | tee -a "$LOGFILE" || log "No LSPHP processes found"
+    elif [[ "$WEB_SERVER" == "nginx" ]]; then
+        ps aux --sort=-rss | grep php-fpm | grep -v grep | head -10 | awk '{printf "%-8s %6s %6s %10s %10s %s\n", $1, $3"%", $4"%", $5/1024"MB", $6/1024"MB", $11}' | tee -a "$LOGFILE" || log "No PHP-FPM processes found"
+    fi
+
+    log ""
+    log "${YELLOW}Zombie PHP Processes:${NC}"
+    local zombies
+    if [[ "$WEB_SERVER" == "openlitespeed" ]]; then
+        zombies=$(ps aux | grep lsphp | grep -v grep | awk '$8 ~ /Z/ {print $0}')
+    elif [[ "$WEB_SERVER" == "nginx" ]]; then
+        zombies=$(ps aux | grep php-fpm | grep -v grep | awk '$8 ~ /Z/ {print $0}')
+    fi
+
+    if [[ -n "$zombies" ]]; then
+        echo "$zombies" | tee -a "$LOGFILE"
+        log_warning "Zombie processes detected - consider restarting PHP service"
+    else
+        log_success "No zombie processes found"
+    fi
+
+    log ""
+    log "${YELLOW}Recent PHP Errors:${NC}"
+    # Check common PHP error log locations
+    local php_error_logs=(
+        "/var/log/php*error.log"
+        "/var/log/php*/error.log"
+        "/usr/local/lsws/logs/stderr.log"
+    )
+
+    local found_errors=false
+    for log_pattern in "${php_error_logs[@]}"; do
+        for error_log in $log_pattern; do
+            if [[ -f "$error_log" && -r "$error_log" ]]; then
+                log "From: $error_log"
+                tail -20 "$error_log" 2>/dev/null | grep -E "Fatal|Warning|Error" | tail -5 | tee -a "$LOGFILE"
+                found_errors=true
+                log ""
+            fi
+        done
+    done
+
+    if [[ "$found_errors" == false ]]; then
+        log "No accessible PHP error logs found or no recent errors"
+    fi
+
+    log ""
+    log "${BLUE}Recommendations:${NC}"
+
+    # Check memory_limit
+    if [[ "$WEB_SERVER" == "openlitespeed" && -n "$lsphp_bin" ]]; then
+        local mem_limit=$($lsphp_bin -i 2>/dev/null | grep "memory_limit =>" | awk '{print $3}')
+        if [[ "$mem_limit" =~ ^[0-9]+M$ ]]; then
+            local mem_value=${mem_limit%M}
+            if [[ $mem_value -lt 128 ]]; then
+                log_warning "  • memory_limit is ${mem_limit} - Consider increasing to at least 128M"
+            fi
+        fi
+    elif [[ "$WEB_SERVER" == "nginx" && -n "$php_bin" ]]; then
+        local mem_limit=$($php_bin -i 2>/dev/null | grep "memory_limit =>" | awk '{print $3}')
+        if [[ "$mem_limit" =~ ^[0-9]+M$ ]]; then
+            local mem_value=${mem_limit%M}
+            if [[ $mem_value -lt 128 ]]; then
+                log_warning "  • memory_limit is ${mem_limit} - Consider increasing to at least 128M"
+            fi
+        fi
+    fi
+
+    # Check OPcache
+    local opcache_enabled
+    if [[ "$WEB_SERVER" == "openlitespeed" && -n "$lsphp_bin" ]]; then
+        opcache_enabled=$($lsphp_bin -i 2>/dev/null | grep "opcache.enable =>" | awk '{print $3}')
+    elif [[ "$WEB_SERVER" == "nginx" && -n "$php_bin" ]]; then
+        opcache_enabled=$($php_bin -i 2>/dev/null | grep "opcache.enable =>" | awk '{print $3}')
+    fi
+
+    if [[ "$opcache_enabled" == "Off" || -z "$opcache_enabled" ]]; then
+        log_warning "  • OPcache is disabled - Enable it for better performance"
+        log "    - Edit php.ini and set: opcache.enable=1"
+        log "    - Recommended: opcache.memory_consumption=128"
+    else
+        log_success "  • OPcache is enabled"
+    fi
+
+    # Process count recommendations
+    local php_process_count
+    if [[ "$WEB_SERVER" == "openlitespeed" ]]; then
+        php_process_count=$(ps aux | grep lsphp | grep -v grep | wc -l)
+        if [[ $php_process_count -gt 100 ]]; then
+            log_warning "  • High number of LSPHP processes ($php_process_count)"
+            log "    - Review ExtApps configuration in OpenLiteSpeed"
+        fi
+    elif [[ "$WEB_SERVER" == "nginx" ]]; then
+        php_process_count=$(ps aux | grep php-fpm | grep -v grep | wc -l)
+        if [[ $php_process_count -gt 100 ]]; then
+            log_warning "  • High number of PHP-FPM processes ($php_process_count)"
+            log "    - Review pm.max_children in pool configurations"
+        fi
+    fi
+
+    log ""
+}
+
+show_general_recommendations() {
+    log_section "GENERAL RECOMMENDATIONS"
+
+    log "${BLUE}Performance Optimization Tips:${NC}"
+    log ""
+    log "${YELLOW}PHP Optimization:${NC}"
+    if [[ "$WEB_SERVER" == "openlitespeed" ]]; then
+        log "  • Enable OPcache in RunCloud PHP settings"
+        log "  • Monitor LSPHP processes - if > ${LONG_PROCESS_THRESHOLD}s: Review slow code or N+1 queries"
+        log "  • Review max connections in RunCloud/OpenLiteSpeed config"
+    elif [[ "$WEB_SERVER" == "nginx" ]]; then
+        log "  • Enable OPcache in PHP-FPM pools"
+        log "  • Tune PHP-FPM settings (pm.max_children, pm.start_servers)"
+        log "  • Monitor PHP-FPM processes for memory leaks"
+    fi
+    log ""
+
+    log "${YELLOW}Database Optimization:${NC}"
+    log "  • Review slow query log regularly to optimize indexes"
+    log "  • If max_connections near limit: Increase in MySQL/MariaDB config"
+    log "  • Tune innodb_buffer_pool_size (recommended: 70% of available RAM)"
+    log "  • Enable query caching if appropriate for your workload"
+    log "  • Monitor and kill long-running queries that exceed reasonable time"
+    log ""
+
+    log "${YELLOW}System Resources:${NC}"
+    log "  • Keep memory usage below 85% for optimal performance"
+    log "  • Monitor swap usage - high swap indicates insufficient RAM"
+    log "  • Watch for OOM killer events - upgrade RAM if frequent"
+    log "  • Keep disk usage below 90% to prevent issues"
+    log "  • Review and rotate logs regularly (find /var/log -mtime +30)"
+    log ""
+
+    log "${YELLOW}Network & Security:${NC}"
+    log "  • Monitor CLOSE_WAIT connections for application issues"
+    log "  • High TIME_WAIT is normal under load"
+    log "  • Review firewall rules and fail2ban configuration"
+    log "  • Keep system and software updated"
+    log ""
+
+    log "${YELLOW}Monitoring Best Practices:${NC}"
+    log "  • Run this analysis during peak hours for accurate data"
+    log "  • Compare results over time to identify trends"
+    log "  • Set up automated alerts (see examples/email_alerts.sh)"
+    log "  • Document any changes made based on recommendations"
     log ""
 }
 
@@ -1262,12 +1468,25 @@ main() {
                 # Toggle language
                 if [[ "$LANG_CODE" == "es" ]]; then
                     LANG_CODE="en"
+                    export LC_ALL=en_US.UTF-8 2>/dev/null || export LC_ALL=C.UTF-8
+                    export LANG=en_US.UTF-8 2>/dev/null || export LANG=C.UTF-8
                 else
                     LANG_CODE="es"
+                    export LC_ALL=es_ES.UTF-8 2>/dev/null || export LC_ALL=C.UTF-8
+                    export LANG=es_ES.UTF-8 2>/dev/null || export LANG=C.UTF-8
                 fi
                 ;;
+            r|R)
+                # Show general recommendations
+                show_general_recommendations | less -R
+                ;;
             *)
-                run_selected_checks "$choice"
+                # Run checks with pagination in interactive mode
+                if command -v less &> /dev/null; then
+                    run_selected_checks "$choice" | less -R
+                else
+                    run_selected_checks "$choice" | more
+                fi
                 echo ""
                 read -p "$(t "menu_press_enter")"
                 ;;
