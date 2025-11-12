@@ -5,6 +5,110 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2025-11-12
+
+### Added
+- **Multi-language Support (i18n)**: English and Spanish support
+  - Automatic language detection based on system locale
+  - Interactive language toggle (option 'i' in menu)
+  - Complete translations for menu, checks, and messages
+  - Default to Spanish if system is in Spanish, English otherwise
+- **Automatic Web Server Detection**: Detects OpenLiteSpeed or Nginx
+  - Shows detected web server in menu
+  - Adapts all checks and analysis to detected server
+- **Nginx Support**: Full support for Nginx + PHP-FPM stacks
+  - `analyze_nginx_processes()` - Nginx and PHP-FPM process analysis
+  - `analyze_phpfpm_cpu()` - PHP-FPM CPU usage monitoring
+  - `analyze_nginx_logs()` - Nginx error log analysis
+  - PHP-FPM specific recommendations
+- **Author Information Display**:
+  - Author name and website shown in interactive menu
+  - Author information included in email alerts
+- **Enhanced email_alerts.sh**:
+  - Updated to use non-interactive mode (`--all` flag)
+  - Web server detection for adaptive PHP process monitoring
+  - Works with both lsphp (OpenLiteSpeed) and php-fpm (Nginx)
+  - Author and web server info included in alert emails
+  - Version tracking (v3.0.0)
+
+### Changed
+- Script version updated to 3.0.0
+- Web server functions now auto-detect and adapt:
+  - `analyze_webserver_processes()` - Routes to OLS or Nginx specific function
+  - `analyze_php_cpu()` - Detects lsphp or php-fpm
+  - `analyze_webserver_logs()` - Routes to appropriate log files
+- Menu structure redesigned to show:
+  - Author information (David Carrero - https://carrero.es)
+  - Detected web server
+  - Dynamic server-specific check names
+- Language toggle added to menu (option 'i')
+- All user-facing text supports translations
+
+### Improved
+- Better compatibility with different RunCloud setups
+- More flexible for various server configurations
+- Enhanced user experience with native language support
+- Clearer attribution and contact information
+- More accurate process detection for different PHP handlers
+
+### Documentation
+- Updated README with acknowledgments:
+  - Stackscale (private cloud infrastructure provider)
+  - Color Vivo (RunCloud server access for testing)
+- Updated examples showing both OLS and Nginx usage
+- Added language selection documentation
+
+## [2.0.0] - 2025-11-12
+
+### Added
+- **Interactive Menu System**: User-friendly menu for selecting which checks to run
+  - Select individual checks (1-10)
+  - Run all checks at once (option 0)
+  - Toggle logging on/off interactively (option l)
+  - Multiple selection support (comma or space-separated)
+- **Command-Line Mode**: Non-interactive operation for automation
+  - `-1` to `-10` flags for running specific checks
+  - `--all` or `-a` to run all checks
+  - `--no-log` to disable log file creation
+  - `--help` accessible without root privileges
+- **Smart Recommendations**: Context-aware, actionable recommendations for each check
+  - Severity-based alerts (Critical, Warning, Success)
+  - Specific commands and configuration suggestions
+  - Memory usage recommendations
+  - Load average analysis
+  - CPU usage alerts for PHP processes
+  - Long-running process detection with kill suggestions
+  - Database connection pool warnings
+  - Disk space cleanup commands
+  - Network connection analysis
+  - OOM killer event detection
+- **Flexible Logging**: Toggle logging on/off
+  - Enabled by default
+  - Can be disabled via command-line flag or interactive menu
+  - All output respects logging preference
+
+### Changed
+- Script version updated to 2.0.0
+- Main execution flow now supports both interactive and non-interactive modes
+- Help system accessible without requiring root privileges
+- Logging is now optional instead of mandatory
+- All `tee` commands now respect the `ENABLE_LOGGING` flag
+- Function architecture refactored for better modularity
+
+### Improved
+- Better user experience with colored, organized output
+- More actionable recommendations based on actual metrics
+- Clearer separation between different operation modes
+- Enhanced flexibility for automation and manual use
+- More granular control over which checks to run
+
+### Documentation
+- Updated README with interactive menu examples
+- Added command-line usage examples
+- Updated feature list with new capabilities
+- Added check number reference guide
+- Updated example output to show recommendations
+
 ## [1.2.0] - 2025-11-12
 
 ### Security Fixes
@@ -103,6 +207,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Example email alert configuration
 - Installation guide
 
+[3.0.0]: https://github.com/dcarrero/check-runcloud/releases/tag/v3.0.0
+[2.0.0]: https://github.com/dcarrero/check-runcloud/releases/tag/v2.0.0
 [1.2.0]: https://github.com/dcarrero/check-runcloud/releases/tag/v1.2.0
 [1.1.0]: https://github.com/dcarrero/check-runcloud/releases/tag/v1.1.0
 [1.0.0]: https://github.com/dcarrero/check-runcloud/releases/tag/v1.0.0
