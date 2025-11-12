@@ -51,121 +51,119 @@ readonly LONG_PROCESS_THRESHOLD=60
 # Internationalization (i18n)
 ################################################################################
 
-# Translation function
+# English translations (Global)
+declare -A TRANS_EN=(
+    # Menu
+    ["menu_title"]="SERVER ANALYSIS TOOL for RUNCLOUD"
+    ["menu_select"]="Select checks to run:"
+    ["menu_run_all"]="Run ALL checks"
+    ["menu_options"]="Options:"
+    ["menu_toggle_log"]="Toggle Logging [Current:"
+    ["menu_toggle_lang"]="Change Language [Current:"
+    ["menu_recommendations"]="General Recommendations"
+    ["menu_quit"]="Quit"
+    ["menu_prompt"]="Enter your choice(s) (comma-separated or space-separated):"
+    ["menu_press_enter"]="Press Enter to continue..."
+    ["menu_exiting"]="Exiting..."
+
+    # Check names
+    ["check_1"]="System Resources (CPU, Memory, Swap)"
+    ["check_2"]="Web Server Processes"
+    ["check_3"]="PHP CPU Usage (Top 15)"
+    ["check_4"]="Long-Running PHP Processes"
+    ["check_5"]="MySQL/MariaDB Analysis"
+    ["check_6"]="Slow Query Log"
+    ["check_7"]="Web Server Logs"
+    ["check_8"]="System Logs"
+    ["check_9"]="Network Statistics"
+    ["check_10"]="Disk Space"
+    ["check_11"]="Advanced PHP Analysis"
+
+    # Common
+    ["on"]="ON"
+    ["off"]="OFF"
+    ["english"]="English"
+    ["spanish"]="Spanish"
+    ["enabled"]="ENABLED"
+    ["disabled"]="DISABLED"
+    ["logging"]="Logging:"
+    ["script_version"]="Script Version:"
+    ["timestamp"]="Timestamp:"
+    ["recommendations"]="Recommendations:"
+    ["error"]="ERROR:"
+    ["warning"]="WARNING:"
+    ["success"]="✓"
+
+    # Help
+    ["help_usage"]="Usage:"
+    ["help_options"]="OPTIONS:"
+    ["help_examples"]="EXAMPLES:"
+    ["help_interactive"]="Interactive menu (default)"
+    ["help_all_no_log"]="Run all checks without logging"
+    ["help_specific"]="Run specific checks only"
+    ["help_all_with_log"]="Run all checks with logging"
+)
+
+# Spanish translations (Global)
+declare -A TRANS_ES=(
+    # Menu
+    ["menu_title"]="HERRAMIENTA DE ANÁLISIS para RUNCLOUD"
+    ["menu_select"]="Seleccione las comprobaciones a ejecutar:"
+    ["menu_run_all"]="Ejecutar TODAS las comprobaciones"
+    ["menu_options"]="Opciones:"
+    ["menu_toggle_log"]="Alternar Registro [Actual:"
+    ["menu_toggle_lang"]="Cambiar Idioma [Actual:"
+    ["menu_recommendations"]="Recomendaciones Generales"
+    ["menu_quit"]="Salir"
+    ["menu_prompt"]="Ingrese su(s) opción(es) (separadas por comas o espacios):"
+    ["menu_press_enter"]="Presione Enter para continuar..."
+    ["menu_exiting"]="Saliendo..."
+
+    # Check names
+    ["check_1"]="Recursos del Sistema (CPU, Memoria, Swap)"
+    ["check_2"]="Procesos del Servidor Web"
+    ["check_3"]="Uso de CPU por PHP (Top 15)"
+    ["check_4"]="Procesos PHP de Larga Duración"
+    ["check_5"]="Análisis de MySQL/MariaDB"
+    ["check_6"]="Registro de Consultas Lentas"
+    ["check_7"]="Registros del Servidor Web"
+    ["check_8"]="Registros del Sistema"
+    ["check_9"]="Estadísticas de Red"
+    ["check_10"]="Espacio en Disco"
+    ["check_11"]="Análisis Avanzado de PHP"
+
+    # Common
+    ["on"]="ACTIVADO"
+    ["off"]="DESACTIVADO"
+    ["english"]="Inglés"
+    ["spanish"]="Español"
+    ["enabled"]="ACTIVADO"
+    ["disabled"]="DESACTIVADO"
+    ["logging"]="Registro:"
+    ["script_version"]="Versión del Script:"
+    ["timestamp"]="Fecha y Hora:"
+    ["recommendations"]="Recomendaciones:"
+    ["error"]="ERROR:"
+    ["warning"]="ADVERTENCIA:"
+    ["success"]="✓"
+
+    # Help
+    ["help_usage"]="Uso:"
+    ["help_options"]="OPCIONES:"
+    ["help_examples"]="EJEMPLOS:"
+    ["help_interactive"]="Menú interactivo (predeterminado)"
+    ["help_all_no_log"]="Ejecutar todas las comprobaciones sin registro"
+    ["help_specific"]="Ejecutar solo comprobaciones específicas"
+    ["help_all_with_log"]="Ejecutar todas las comprobaciones con registro"
+)
+
+# Translation function - uses global arrays
 t() {
     local key="$1"
-
-    # English translations
-    declare -A en=(
-        # Menu
-        ["menu_title"]="SERVER ANALYSIS TOOL for RUNCLOUD"
-        ["menu_select"]="Select checks to run:"
-        ["menu_run_all"]="Run ALL checks"
-        ["menu_options"]="Options:"
-        ["menu_toggle_log"]="Toggle Logging [Current:"
-        ["menu_toggle_lang"]="Change Language [Current:"
-        ["menu_recommendations"]="General Recommendations"
-        ["menu_quit"]="Quit"
-        ["menu_prompt"]="Enter your choice(s) (comma-separated or space-separated):"
-        ["menu_press_enter"]="Press Enter to continue..."
-        ["menu_exiting"]="Exiting..."
-
-        # Check names
-        ["check_1"]="System Resources (CPU, Memory, Swap)"
-        ["check_2"]="Web Server Processes"
-        ["check_3"]="PHP CPU Usage (Top 15)"
-        ["check_4"]="Long-Running PHP Processes"
-        ["check_5"]="MySQL/MariaDB Analysis"
-        ["check_6"]="Slow Query Log"
-        ["check_7"]="Web Server Logs"
-        ["check_8"]="System Logs"
-        ["check_9"]="Network Statistics"
-        ["check_10"]="Disk Space"
-        ["check_11"]="Advanced PHP Analysis"
-
-        # Common
-        ["on"]="ON"
-        ["off"]="OFF"
-        ["english"]="English"
-        ["spanish"]="Spanish"
-        ["enabled"]="ENABLED"
-        ["disabled"]="DISABLED"
-        ["logging"]="Logging:"
-        ["script_version"]="Script Version:"
-        ["timestamp"]="Timestamp:"
-        ["recommendations"]="Recommendations:"
-        ["error"]="ERROR:"
-        ["warning"]="WARNING:"
-        ["success"]="✓"
-
-        # Help
-        ["help_usage"]="Usage:"
-        ["help_options"]="OPTIONS:"
-        ["help_examples"]="EXAMPLES:"
-        ["help_interactive"]="Interactive menu (default)"
-        ["help_all_no_log"]="Run all checks without logging"
-        ["help_specific"]="Run specific checks only"
-        ["help_all_with_log"]="Run all checks with logging"
-    )
-
-    # Spanish translations
-    declare -A es=(
-        # Menu
-        ["menu_title"]="HERRAMIENTA DE ANÁLISIS para RUNCLOUD"
-        ["menu_select"]="Seleccione las comprobaciones a ejecutar:"
-        ["menu_run_all"]="Ejecutar TODAS las comprobaciones"
-        ["menu_options"]="Opciones:"
-        ["menu_toggle_log"]="Alternar Registro [Actual:"
-        ["menu_toggle_lang"]="Cambiar Idioma [Actual:"
-        ["menu_recommendations"]="Recomendaciones Generales"
-        ["menu_quit"]="Salir"
-        ["menu_prompt"]="Ingrese su(s) opción(es) (separadas por comas o espacios):"
-        ["menu_press_enter"]="Presione Enter para continuar..."
-        ["menu_exiting"]="Saliendo..."
-
-        # Check names
-        ["check_1"]="Recursos del Sistema (CPU, Memoria, Swap)"
-        ["check_2"]="Procesos del Servidor Web"
-        ["check_3"]="Uso de CPU por PHP (Top 15)"
-        ["check_4"]="Procesos PHP de Larga Duración"
-        ["check_5"]="Análisis de MySQL/MariaDB"
-        ["check_6"]="Registro de Consultas Lentas"
-        ["check_7"]="Registros del Servidor Web"
-        ["check_8"]="Registros del Sistema"
-        ["check_9"]="Estadísticas de Red"
-        ["check_10"]="Espacio en Disco"
-        ["check_11"]="Análisis Avanzado de PHP"
-
-        # Common
-        ["on"]="ACTIVADO"
-        ["off"]="DESACTIVADO"
-        ["english"]="Inglés"
-        ["spanish"]="Español"
-        ["enabled"]="ACTIVADO"
-        ["disabled"]="DESACTIVADO"
-        ["logging"]="Registro:"
-        ["script_version"]="Versión del Script:"
-        ["timestamp"]="Fecha y Hora:"
-        ["recommendations"]="Recomendaciones:"
-        ["error"]="ERROR:"
-        ["warning"]="ADVERTENCIA:"
-        ["success"]="✓"
-
-        # Help
-        ["help_usage"]="Uso:"
-        ["help_options"]="OPCIONES:"
-        ["help_examples"]="EJEMPLOS:"
-        ["help_interactive"]="Menú interactivo (predeterminado)"
-        ["help_all_no_log"]="Ejecutar todas las comprobaciones sin registro"
-        ["help_specific"]="Ejecutar solo comprobaciones específicas"
-        ["help_all_with_log"]="Ejecutar todas las comprobaciones con registro"
-    )
-
-    # Return translation based on current language
     if [[ "$LANG_CODE" == "es" ]]; then
-        echo "${es[$key]}"
+        printf '%s' "${TRANS_ES[$key]}"
     else
-        echo "${en[$key]}"
+        printf '%s' "${TRANS_EN[$key]}"
     fi
 }
 
@@ -1478,15 +1476,13 @@ main() {
                 ;;
             r|R)
                 # Show general recommendations
-                show_general_recommendations | less -R
+                show_general_recommendations
+                echo ""
+                read -p "$(t "menu_press_enter")"
                 ;;
             *)
-                # Run checks with pagination in interactive mode
-                if command -v less &> /dev/null; then
-                    run_selected_checks "$choice" | less -R
-                else
-                    run_selected_checks "$choice" | more
-                fi
+                # Run checks
+                run_selected_checks "$choice"
                 echo ""
                 read -p "$(t "menu_press_enter")"
                 ;;
