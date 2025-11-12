@@ -9,9 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **UTF-8 Encoding**: Fixed character encoding issues with Spanish characters (ñ, á, é, í, ó, ú)
+  - Moved translation arrays to global scope (TRANS_EN, TRANS_ES)
+  - Changed from `echo` to `printf` for better UTF-8 handling
   - Properly configured LC_ALL and LANG environment variables
   - Language detection happens before UTF-8 setup
   - Language toggle updates encoding variables correctly
+
+### Removed
+- **Pagination**: Removed `less`/`more` pagination from interactive mode
+  - Caused rendering issues with special characters
+  - Now displays output directly without pagination
 
 ### Added
 - **General Recommendations Menu Option**: New 'r' option for comprehensive recommendations
@@ -19,11 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Context-aware tips based on detected web server
   - Organized by category: PHP, Database, System Resources, Network & Security
   - Only shows when explicitly requested, not after every check
-- **Interactive Pagination**: Automatic pagination for long outputs in interactive mode
-  - Uses `less -R` (or `more` as fallback) for better readability
-  - Only active in interactive mode - no pagination in `--all` mode
-  - Preserves colors in paginated output
-  - Press 'q' to exit paginator
 - **Advanced PHP Analysis** (Option 11): Deep dive PHP diagnostics
   - PHP version and critical configuration settings
   - OPcache status and settings
