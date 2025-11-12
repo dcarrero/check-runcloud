@@ -1,12 +1,18 @@
-# Server Analysis Script for RunCloud + OpenLiteSpeed + MySQL/MariaDB
+# Server Analysis Script for RunCloud (OpenLiteSpeed/Nginx + MySQL/MariaDB)
 
-A comprehensive monitoring and diagnostics tool for web servers running **RunCloud**, **OpenLiteSpeed**, and **MySQL/MariaDB**. This script helps identify performance bottlenecks, resource issues, and provides actionable recommendations.
+A comprehensive monitoring and diagnostics tool for web servers running **RunCloud** with **OpenLiteSpeed** or **Nginx**, and **MySQL/MariaDB**. This script automatically detects your web server, supports multiple languages (English/Spanish), and provides actionable recommendations.
 
 ## Features
 
+### Analysis Capabilities
+- **Automatic Web Server Detection**: Detects OpenLiteSpeed or Nginx automatically
 - **System Resource Monitoring**: CPU, memory, swap, and load average tracking
-- **OpenLiteSpeed Analysis**: Process monitoring and error log analysis
-- **PHP Process Tracking**: Identify long-running PHP processes (LSPHP)
+- **Web Server Analysis**:
+  - OpenLiteSpeed: Process monitoring, LSPHP tracking, and error log analysis
+  - Nginx: Process monitoring, PHP-FPM tracking, and error log analysis
+- **PHP Process Tracking**: Identify long-running PHP processes
+  - LSPHP for OpenLiteSpeed
+  - PHP-FPM for Nginx
 - **MySQL/MariaDB Diagnostics**:
   - Automatic detection of MySQL or MariaDB
   - Active connections and queries
@@ -15,8 +21,26 @@ A comprehensive monitoring and diagnostics tool for web servers running **RunClo
 - **Network Statistics**: Connection states (ESTABLISHED, TIME_WAIT, CLOSE_WAIT)
 - **Disk Space Monitoring**: Storage usage alerts
 - **System Logs**: Recent database logs and OOM killer messages
-- **Automated Alerts**: Warnings for high memory/disk usage
-- **Detailed Logging**: Timestamped logs for historical analysis
+
+### Smart Recommendations
+- **Context-Aware Alerts**: Each section provides specific recommendations based on actual findings
+- **Severity Levels**: Critical warnings, warnings, and success indicators
+- **Actionable Guidance**: Specific commands and configuration suggestions for each issue
+
+### Flexible Operation Modes
+- **Interactive Menu**: User-friendly menu for selecting specific checks
+  - Shows detected web server
+  - Displays author information
+- **Command-Line Mode**: Non-interactive operation for automation and scripting
+- **Selective Checks**: Run only the checks you need
+- **Optional Logging**: Enable/disable log file creation as needed
+- **Detailed Logging**: Timestamped logs for historical analysis when enabled
+
+### Multi-Language Support
+- **English and Spanish**: Full interface translation
+- **Automatic Detection**: Uses system language by default
+- **Language Toggle**: Switch languages in interactive mode (option 'i')
+- **Complete Coverage**: All menus, checks, and messages translated
 
 ## Requirements
 
@@ -99,26 +123,107 @@ sudo bash server_analysis.sh
 
 ## Usage
 
-### Basic Usage
+### Interactive Mode (Default)
+
+Run the script without arguments to access the interactive menu:
 
 ```bash
 sudo ./server_analysis.sh
 ```
 
+The interactive menu allows you to:
+- Select specific checks to run (1-10)
+- Run all checks (option 0)
+- Toggle logging on/off (option l)
+- Quit (option q)
+
+You can select multiple checks at once by separating them with commas or spaces:
+```
+Enter your choice(s): 1,5,10
+# or
+Enter your choice(s): 1 5 10
+```
+
+### Command-Line Mode (Non-Interactive)
+
+Run specific checks directly from the command line:
+
+```bash
+# Show help
+./server_analysis.sh --help
+
+# Run all checks
+sudo ./server_analysis.sh --all
+
+# Run all checks without logging
+sudo ./server_analysis.sh --all --no-log
+
+# Run specific checks only
+sudo ./server_analysis.sh -1 -5 -10
+
+# Run system resources and database checks without logging
+sudo ./server_analysis.sh -1 -5 --no-log
+```
+
+Available command-line options:
+- `-h, --help`: Show help message (doesn't require sudo)
+- `-a, --all`: Run all checks
+- `--no-log`: Disable log file creation
+- `-1` to `-10`: Run specific checks (see list below)
+
+### Check Numbers
+
+1. System Resources (CPU, Memory, Swap)
+2. OpenLiteSpeed Processes
+3. LSPHP CPU Usage (Top 15)
+4. Long-Running PHP Processes
+5. MySQL/MariaDB Analysis
+6. Slow Query Log
+7. OpenLiteSpeed Logs
+8. System Logs
+9. Network Statistics
+10. Disk Space
+
 ### Output
 
 The script generates:
-1. **Console output**: Real-time colored output for quick review
-2. **Log file**: Saved in `/home/logs/server_analysis_YYYYMMDD_HHMMSS.log`
+1. **Console output**: Real-time colored output with specific recommendations for each section
+2. **Log file**: By default, saved in `/home/logs/server_analysis_YYYYMMDD_HHMMSS.log` (can be disabled with `--no-log` or in interactive mode)
 
 ### Example Output
 
 ```
-========== SERVER ANALYSIS: RUNCLOUD + OPENLITESPEED + MYSQL/MARIADB ==========
-Script Version: 1.0.0
-Timestamp: 2025-11-12 10:30:45
+========================================
+  SERVER ANALYSIS TOOL v2.0.0
+========================================
 
-[1] SYSTEM RESOURCES
+Select checks to run:
+
+  1)  System Resources (CPU, Memory, Swap)
+  2)  OpenLiteSpeed Processes
+  3)  LSPHP CPU Usage (Top 15)
+  4)  Long-Running PHP Processes
+  5)  MySQL/MariaDB Analysis
+  6)  Slow Query Log
+  7)  OpenLiteSpeed Logs
+  8)  System Logs
+  9)  Network Statistics
+  10) Disk Space
+
+  0)  Run ALL checks
+
+Options:
+  l)  Toggle Logging [Current: ON]
+  q)  Quit
+
+Enter your choice(s): 1,5
+
+========== SERVER ANALYSIS: RUNCLOUD + OPENLITESPEED + MYSQL/MARIADB ==========
+Script Version: 2.0.0
+Timestamp: 2025-11-12 10:30:45
+Logging: ENABLED (/home/logs/server_analysis_20251112_103045.log)
+
+[1. SYSTEM RESOURCES]
 =====================================
 CPU, Memory and Swap Usage:
               total        used        free      shared  buff/cache   available
@@ -128,16 +233,22 @@ Swap:         2.0Gi       512Mi       1.5Gi
 System Load Average:  2.15, 1.89, 1.56
 CPU Cores: 8
 
-[2] OPENLITESPEED PROCESSES
-=====================================
-...
+Recommendations:
+  ✓ Memory usage is healthy (54%)
+  ✓ Load average is normal
 
-[5] MYSQL/MARIADB ANALYSIS
+[5. MYSQL/MARIADB ANALYSIS]
 =====================================
 Database Type: MariaDB
 Client: mariadb
 Socket: /run/mysqld/mysqld.sock
 ...
+
+Recommendations:
+  ✓ No slow queries detected
+  ⚠ Connection usage is 85% (170 / 200)
+    - Increase max_connections in MySQL/MariaDB config
+    - Review connection pooling in applications
 ```
 
 ## Automation
@@ -340,11 +451,19 @@ If you find this script helpful, please:
 
 ## Changelog
 
+### Version 2.0.0 (2025-11-12)
+- **Interactive Menu**: User-friendly interactive menu for selecting checks
+- **Command-Line Mode**: Non-interactive operation with flags (-1 to -10, --all, --no-log)
+- **Smart Recommendations**: Context-aware recommendations for each check
+- **Optional Logging**: Toggle logging on/off (default: enabled)
+- **Selective Checks**: Run individual checks or all checks
+- **Help System**: Comprehensive help accessible without root privileges
+
 ### Version 1.0.0 (2025-11-12)
 - Initial release
 - Basic system resource monitoring
 - OpenLiteSpeed process analysis
-- MariaDB diagnostics
+- MySQL/MariaDB diagnostics
 - Automated alerting system
 
 ## FAQ
@@ -363,6 +482,14 @@ A: Yes, it works with any OpenLiteSpeed + MySQL/MariaDB setup. RunCloud-specific
 
 **Q: Does it work with MySQL or only MariaDB?**
 A: It works with both! The script automatically detects whether you have MySQL or MariaDB installed and uses the appropriate client.
+
+---
+
+## Acknowledgments
+
+Special thanks to:
+- **[Stackscale](https://www.stackscale.com)** - For providing private cloud infrastructure to deploy and test RunCloud environments
+- **[Color Vivo](https://colorvivo.com)** - For providing access to their RunCloud servers and WordPress installations for script testing
 
 ---
 

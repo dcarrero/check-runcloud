@@ -1,10 +1,11 @@
 #!/bin/bash
 
 ################################################################################
-# Email Alert Wrapper for Server Analysis Script
+# Email Alert Wrapper for Server Analysis Script v3.0
 # Author: David Carrero (https://carrero.es)
 # Description: Runs server analysis and sends email alerts when issues detected
 # Usage: Configure EMAIL_TO and add to crontab
+# Compatible with: OpenLiteSpeed (lsphp) and Nginx (php-fpm)
 ################################################################################
 
 set -euo pipefail
@@ -14,6 +15,7 @@ readonly EMAIL_TO="your-email@example.com"
 readonly EMAIL_FROM="server-monitor@yourdomain.com"
 readonly EMAIL_SUBJECT="Server Alert - High Resource Usage Detected"
 readonly ANALYSIS_SCRIPT="/usr/local/bin/server-analysis"
+readonly SCRIPT_VERSION="3.0.0"
 
 # Alert thresholds
 readonly MEMORY_ALERT_THRESHOLD=85
@@ -24,16 +26,29 @@ readonly RED='\033[0;31m'
 readonly GREEN='\033[0;32m'
 readonly NC='\033[0m'
 
-# Run the analysis script
+# Detect web server type
+detect_web_server() {
+    if command -v /usr/local/lsws/bin/lswsctrl &> /dev/null || [[ -d "/usr/local/lsws" ]]; then
+        echo "openlitespeed"
+    elif command -v nginx &> /dev/null || systemctl list-units 2>/dev/null | grep -q nginx; then
+        echo "nginx"
+    else
+        echo "unknown"
+    fi
+}
+
+# Run the analysis script in non-interactive mode
 run_analysis() {
     local temp_log="$1"
-    "$ANALYSIS_SCRIPT" > "$temp_log" 2>&1
+    # Run with --all flag for non-interactive execution
+    "$ANALYSIS_SCRIPT" --all > "$temp_log" 2>&1
 }
 
 # Check if alerts should be sent
 check_alerts() {
     local should_alert=false
     local alert_messages=""
+    local web_server=$(detect_web_server)
 
     # Check memory usage
     local memory_usage=$(free | grep Mem | awk '{printf("%.0f", ($3/$2)*100)}')
@@ -49,8 +64,21 @@ check_alerts() {
         alert_messages+="⚠️  ALERT: Disk usage is ${disk_usage}% (threshold: ${DISK_ALERT_THRESHOLD}%)\n"
     fi
 
-    # Check for long-running PHP processes
-    local long_php=$(ps -eo etime,cmd | grep lsphp | grep -v grep | awk '{
+    # Check for long-running PHP processes (adapts to web server)
+    local php_pattern
+    local php_type
+    if [[ "$web_server" == "openlitespeed" ]]; then
+        php_pattern="lsphp"
+        php_type="LSPHP"
+    elif [[ "$web_server" == "nginx" ]]; then
+        php_pattern="php-fpm"
+        php_type="PHP-FPM"
+    else
+        php_pattern="php"
+        php_type="PHP"
+    fi
+
+    local long_php=$(ps -eo etime,cmd | grep "$php_pattern" | grep -v grep | awk '{
         split($1, time, "-")
         if (length(time) > 1) print
         else {
@@ -61,11 +89,11 @@ check_alerts() {
 
     if [[ $long_php -gt 5 ]]; then
         should_alert=true
-        alert_messages+="⚠️  ALERT: ${long_php} PHP processes running longer than 1 hour\n"
+        alert_messages+="⚠️  ALERT: ${long_php} ${php_type} processes running longer than 1 hour\n"
     fi
 
     # Check for OOM killer activity
-    if dmesg | grep -i "oom-kill" | grep -q "$(date +%b)"; then
+    if dmesg | grep -i "oom-kill" | grep -q "$(date +%b)" 2>/dev/null; then
         should_alert=true
         alert_messages+="⚠️  ALERT: OOM Killer was active recently\n"
     fi
@@ -82,6 +110,7 @@ check_alerts() {
 send_email() {
     local alert_summary="$1"
     local latest_log
+    local web_server=$(detect_web_server)
 
     # Safely find the latest log file
     latest_log=$(find /home/logs -name "server_analysis_*.log" -type f -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
@@ -93,11 +122,15 @@ send_email() {
     fi
 
     {
-        echo "Server Analysis Alert"
-        echo "====================="
+        echo "Server Analysis Alert v${SCRIPT_VERSION}"
+        echo "========================================"
+        echo "Author: David Carrero"
+        echo "GitHub: https://github.com/dcarrero/check-runcloud"
+        echo "========================================"
         echo ""
         echo "Server: $(hostname)"
         echo "Date: $(date)"
+        echo "Web Server: ${web_server}"
         echo ""
         echo "$alert_summary"
         echo ""
@@ -111,6 +144,7 @@ send_email() {
 send_email_mailx() {
     local alert_summary="$1"
     local latest_log
+    local web_server=$(detect_web_server)
 
     # Safely find the latest log file
     latest_log=$(find /home/logs -name "server_analysis_*.log" -type f -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
@@ -122,11 +156,15 @@ send_email_mailx() {
     fi
 
     {
-        echo "Server Analysis Alert"
-        echo "====================="
+        echo "Server Analysis Alert v${SCRIPT_VERSION}"
+        echo "========================================"
+        echo "Author: David Carrero"
+        echo "GitHub: https://github.com/dcarrero/check-runcloud"
+        echo "========================================"
         echo ""
         echo "Server: $(hostname)"
         echo "Date: $(date)"
+        echo "Web Server: ${web_server}"
         echo ""
         echo "$alert_summary"
         echo ""
@@ -140,6 +178,7 @@ send_email_mailx() {
 send_email_smtp() {
     local alert_summary="$1"
     local latest_log
+    local web_server=$(detect_web_server)
 
     # Safely find the latest log file
     latest_log=$(find /home/logs -name "server_analysis_*.log" -type f -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-)
@@ -164,11 +203,15 @@ send_email_smtp() {
     fi
 
     {
-        echo "Server Analysis Alert"
-        echo "====================="
+        echo "Server Analysis Alert v${SCRIPT_VERSION}"
+        echo "========================================"
+        echo "Author: David Carrero"
+        echo "GitHub: https://github.com/dcarrero/check-runcloud"
+        echo "========================================"
         echo ""
         echo "Server: $(hostname)"
         echo "Date: $(date)"
+        echo "Web Server: ${web_server}"
         echo ""
         echo "$alert_summary"
     } | sendemail \
