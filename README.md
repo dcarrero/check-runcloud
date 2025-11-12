@@ -194,18 +194,22 @@ The script generates:
 
 ```
 ========================================
-  SERVER ANALYSIS TOOL v2.0.0
+  SERVER ANALYSIS TOOL v3.0.0
 ========================================
+  Author: David Carrero
+  GitHub: https://github.com/dcarrero/check-runcloud
+========================================
+  Web Server: OpenLiteSpeed
 
 Select checks to run:
 
   1)  System Resources (CPU, Memory, Swap)
-  2)  OpenLiteSpeed Processes
-  3)  LSPHP CPU Usage (Top 15)
+  2)  Web Server Processes (OpenLiteSpeed)
+  3)  PHP CPU Usage (Top 15)
   4)  Long-Running PHP Processes
   5)  MySQL/MariaDB Analysis
   6)  Slow Query Log
-  7)  OpenLiteSpeed Logs
+  7)  Web Server Logs (OpenLiteSpeed)
   8)  System Logs
   9)  Network Statistics
   10) Disk Space
@@ -214,12 +218,13 @@ Select checks to run:
 
 Options:
   l)  Toggle Logging [Current: ON]
+  i)  Change Language [Current: English]
   q)  Quit
 
 Enter your choice(s): 1,5
 
 ========== SERVER ANALYSIS: RUNCLOUD + OPENLITESPEED + MYSQL/MARIADB ==========
-Script Version: 2.0.0
+Script Version: 3.0.0
 Timestamp: 2025-11-12 10:30:45
 Logging: ENABLED (/home/logs/server_analysis_20251112_103045.log)
 
