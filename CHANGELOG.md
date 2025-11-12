@@ -7,7 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.0] - 2025-11-12
 
+### Fixed
+- **UTF-8 Encoding**: Fixed character encoding issues with Spanish characters (ñ, á, é, í, ó, ú)
+  - Properly configured LC_ALL and LANG environment variables
+  - Language detection happens before UTF-8 setup
+  - Language toggle updates encoding variables correctly
+
 ### Added
+- **General Recommendations Menu Option**: New 'r' option for comprehensive recommendations
+  - Separated general recommendations from individual check results
+  - Context-aware tips based on detected web server
+  - Organized by category: PHP, Database, System Resources, Network & Security
+  - Only shows when explicitly requested, not after every check
+- **Interactive Pagination**: Automatic pagination for long outputs in interactive mode
+  - Uses `less -R` (or `more` as fallback) for better readability
+  - Only active in interactive mode - no pagination in `--all` mode
+  - Preserves colors in paginated output
+  - Press 'q' to exit paginator
+- **Advanced PHP Analysis** (Option 11): Deep dive PHP diagnostics
+  - PHP version and critical configuration settings
+  - OPcache status and settings
+  - PHP-FPM pool configurations (Nginx) or LSPHP settings (OpenLiteSpeed)
+  - Process analysis by user/application
+  - Memory usage analysis (VSZ vs RSS) for top 10 processes
+  - Zombie process detection
+  - Recent PHP error log analysis
+  - Smart recommendations based on actual configuration
 - **Multi-language Support (i18n)**: English and Spanish support
   - Automatic language detection based on system locale
   - Interactive language toggle (option 'i' in menu)
@@ -33,16 +58,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Script version updated to 3.0.0
+- **Recommendations System Redesigned**:
+  - General recommendations moved to dedicated menu option ('r')
+  - Individual checks now show only specific, data-driven recommendations
+  - No more repetitive generic advice after each check
 - Web server functions now auto-detect and adapt:
   - `analyze_webserver_processes()` - Routes to OLS or Nginx specific function
   - `analyze_php_cpu()` - Detects lsphp or php-fpm
   - `analyze_webserver_logs()` - Routes to appropriate log files
 - Menu structure redesigned to show:
-  - Author information (David Carrero - https://carrero.es)
+  - Author information (David Carrero)
+  - GitHub repository link
   - Detected web server
   - Dynamic server-specific check names
+  - General recommendations option ('r')
 - Language toggle added to menu (option 'i')
 - All user-facing text supports translations
+- Interactive mode now uses pagination for better readability
 
 ### Improved
 - Better compatibility with different RunCloud setups

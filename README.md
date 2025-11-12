@@ -183,6 +183,7 @@ Available command-line options:
 8. System Logs
 9. Network Statistics
 10. Disk Space
+11. Advanced PHP Analysis
 
 ### Output
 
